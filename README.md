@@ -1,130 +1,322 @@
 # Vi-Notes
 
-**Vi-Notes** is an authenticity verification platform designed to distinguish genuine human-written content from AI-generated or AI-assisted text. The system focuses on analyzing **writing behavior** alongside **statistical and linguistic characteristics** of the text to establish reliable authorship verification.
+Authenticity verification platform that helps prove content was genuinely written by a human.
 
-This repository represents the **design and conceptual foundation** for the Vi-Notes system.
+Vi-Notes combines keyboard behavior signals with text-level statistical analysis to detect suspicious patterns such as pasted chunks, unusually uniform typing rhythm, and behavior-content mismatch.
 
----
+Mentor: Jinal Gupta
 
-## Motivation
+## Summary
 
-With the widespread availability of AI writing tools, verifying true human authorship has become increasingly challenging. Most existing detection methods rely primarily on textual analysis, which can be inconsistent and easy to bypass.
+Vi-Notes records writing-session metadata while a user types in a clean editor. It then analyzes:
 
-Vi-Notes approaches this problem by combining:
-- Behavioral signals from the writing process
-- Statistical analysis of the written content
-- Correlation between how content is written and what is written
+- Keystroke timing rhythm
+- Editing behavior (deletions, pauses, corrections)
+- Paste activity ranges
+- Text structure and consistency signals
 
----
+After each save, the system generates an authenticity report with score, reasons, and highlighted segments. Sessions can be shared with a public certificate link and replayed to visualize how the text was produced.
 
-## Core Idea
+## Core Features
 
-Human writing naturally includes:
-- Variable typing speeds
-- Pauses during thinking
-- Revisions during idea formation
-- Irregular sentence structures
-- A relationship between content complexity and editing frequency
+### Writing and Monitoring
 
-AI-generated or pasted text often lacks these behavioral signatures.
+- Distraction-free editor for live writing
+- Keystroke token capture (no raw key logging)
+- Delay and rhythm tracking
+- Paste event detection with start/end ranges
 
-Vi-Notes is designed to capture and analyze these characteristics to assess authorship authenticity.
+### Analysis and Detection
 
----
+- Rule-based scoring pipeline with ML adapter hook
+- Segment labeling:
+	- normal
+	- copied
+	- ai_suspect
+- Reasons and statistics per session (avg delay, variance, text-to-keystroke ratio, paste count)
 
-## Key Features
+### Replay and Evidence
 
-### Writing Session Monitoring
-- Capture keystroke timing metadata (not raw key content)
-- Track pauses, deletions, edits, and writing flow
-- Detect pasted or externally inserted text blocks
+- Session replay with playback speed control
+- Typed content appears progressively based on timing
+- Pasted content appears in one step (chunk insertion behavior)
+- Highlighted replay output:
+	- copied segments are visually marked
+	- ai_suspect segments are visually marked
 
-### Behavioral Pattern Analysis
-- Pause distribution before sentences and paragraphs
-- Typing speed variance
-- Revision frequency relative to text complexity
-- Micro-pauses around punctuation and structural boundaries
+### Sharing and Verification
 
-### Textual Statistical Analysis
-- Sentence length variation
-- Vocabulary diversity metrics
-- Stylistic consistency analysis
-- Linguistic irregularities typical of human writing
+- Share session to generate certificate id
+- Copy certificate link directly from dashboard
+- Public verification page for proof-of-work review
 
-### Cross-Verification Engine
-- Correlate keyboard behavior with text evolution
-- Identify mismatches between behavioral data and content
-- Flag suspicious uniformity patterns
+## Extra Features Added
 
-### Authenticity Reports
-- Confidence score for human authorship
-- Highlighted suspicious segments
-- Supporting behavioral and textual indicators
-- Shareable verification summaries
+- Share-session state sync immediately after sharing
+- Replay progress bar and speed selector
+- Enhanced replay UI controls
+- Certificate link copy actions
+- Public certificate view redesign with metrics cards
+- Session list badges for shared/private state
 
----
+## Tech Stack
 
-## Tech Stack (MERN Architecture)
+- Frontend: React, TypeScript, React Router, CRA toolchain
+- Desktop bridge: Electron entry support in client package
+- Backend: Node.js, Express.js, JWT auth
+- Database: MongoDB with Mongoose
+- Analysis: Rule-based pipeline + TensorFlow adapter placeholder
 
-### Frontend
-- React
-- TypeScript
-- Electron for desktop-level keyboard event access
+## Project Structure
 
-### Backend
-- Node.js
-- Express.js
-- RESTful APIs for session handling and analysis
+```text
+vi-notes/
+	README.md
+	LICENSE
 
-### Database
-- MongoDB
-- Encrypted storage for writing sessions, keystroke metadata, and reports
+	client/
+		package.json
+		electron.js
+		public/
+		src/
+			App.tsx
+			App.css
+			Components/
+				Login.tsx
+				Editor.tsx
+				SessionList.tsx
+				ReplayPlayer.tsx
+			pages/
+				CertificateView.tsx
+			types/
+				contracts.ts
 
-### Machine Learning
-- TensorFlow / PyTorch
-- Supervised learning for human vs AI-assisted writing
-- Unsupervised anomaly detection
-- NLP-based statistical signature analysis
+	server/
+		package.json
+		.env
+		index.js
+		config.js
+		middleware/
+			requireAuth.js
+		models/
+			User.js
+			Session.js
+		routes/
+			auth.js
+			session.js
+			verify.js
+		ml/
+			analyzer.js
+			featureExtractor.js
+			segmentDetector.js
+			adapters/
+				tensorflowAdapter.js
+		utils/
+			analyze.js
+			validateRawSessionData.js
+```
 
----
+## Installation
 
-## Privacy & Ethics
+### Prerequisites
 
-Vi-Notes is designed with privacy-first principles:
+- Node.js 18+
+- npm 9+
+- MongoDB running locally or a reachable MongoDB URI
 
-- No storage of raw keystroke content
-- Only timing, frequency, and structural metadata is collected
-- Encrypted data storage
-- User-controlled session tracking
-- Monitoring limited strictly to active writing sessions
+### 1) Clone and install dependencies
 
----
+```bash
+git clone <your-repo-url>
+cd vi-notes
 
-## Project Goals
+cd client
+npm install
 
-- Restore trust in written content authenticity
-- Differentiate between human-written, AI-assisted, and AI-generated text
-- Adapt detection methods as AI writing tools evolve
-- Maintain ethical, transparent, and privacy-conscious verification
+cd ../server
+npm install
+```
 
----
+## Environment Setup
 
-## Repository Scope
+Create file at server/.env and fill values:
 
-This repository currently serves as:
-- A design reference
-- A research and experimentation space
-- A foundation for future MERN-based implementation
+```env
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/vinotes
+JWT_SECRET=change_this_to_a_long_random_secret
+```
 
----
+Notes:
 
-## Contributing
+- Use a long random value for JWT_SECRET in real environments.
+- If MongoDB is remote, replace MONGO_URI accordingly.
 
-Contributions are welcome, especially for **feature requests and their implementation**.  
-If you are interested in working on an existing feature request or proposing a new one, please open or comment on an issue to start the discussion.
+## Run the Project
 
----
+Open two terminals.
+
+### Terminal 1: Backend
+
+```bash
+cd server
+npm run dev
+```
+
+Server starts at http://localhost:5000
+
+### Terminal 2: Frontend
+
+```bash
+cd client
+npm start
+```
+
+App starts at http://localhost:3000
+
+### Optional: Electron client entry
+
+```bash
+cd client
+npm run electron
+```
+
+## Scripts
+
+### Client scripts
+
+- npm start: run React dev server
+- npm run build: production build
+- npm test: run client tests
+- npm run electron: launch electron entry
+- npm run eject: CRA eject
+
+### Server scripts
+
+- npm start: run server with node
+- npm run dev: run server with nodemon
+- npm test: placeholder test command
+
+## Routes (Backend API)
+
+Base server URL: http://localhost:5000
+
+### Health
+
+- GET /health
+
+### Auth routes
+
+- POST /auth/register
+	- body: email, password
+	- returns: _id, email, token
+- POST /auth/login
+	- body: email, password
+	- returns: _id, email, token
+
+### Session routes (protected by Bearer token)
+
+- POST /api/sessions/save
+	- body: userId, text, keystrokes, pasteEvents
+	- returns: sessionId, analysis
+- GET /api/sessions/user/:userId
+	- returns: all sessions for authenticated user
+- PUT /api/sessions/:id/share
+	- returns: certificateId, isPublic, score
+
+### Public verify route
+
+- GET /api/verify/:certificateId
+	- returns: content, metadata (keystrokes and pasteEvents), score, segments
+
+## Frontend Navigation
+
+### App routes
+
+- /login: login page
+- /register: register page (same auth component flow)
+- /dashboard: main editor and reports (requires login)
+- /verify/:certificateId: public certificate page
+
+### User flow
+
+1. Register or login
+2. Write naturally in dashboard editor
+3. Save session
+4. Review authenticity report and detection map
+5. Open replay preview to inspect composition behavior
+6. Share session to generate certificate
+7. Open public certificate page and copy/share proof link
+
+## Usage Guide
+
+### Writing Session
+
+- Type content in editor
+- Keystrokes and paste events are captured as metadata
+- Save session to run analysis pipeline
+
+### Authenticity Report
+
+Each saved session includes:
+
+- Score (0-100)
+- Reasons (human-like signals or suspicious indicators)
+- Stats (typing rhythm and text-generation ratio)
+- Segments (normal, copied, ai_suspect)
+
+### Replay Behavior
+
+- Play reproduces writing timeline
+- Normal typed content appears progressively
+- Pasted blocks appear at once at their paste event moment
+- Highlighting helps separate copied and normal regions
+
+### Share and Verify
+
+- Click Share Session in selected session panel
+- Certificate id and public URL are generated
+- Open Certificate View to inspect replay and metrics publicly
+
+## What Output You Should See
+
+On dashboard after saving:
+
+- Authenticity score
+- Reasons list
+- Detection map with highlighted ranges
+- Replay preview with controls
+
+On certificate page:
+
+- Public proof page with score and metrics
+- Replay playback of that shared session
+- Copy-link action for certificate URL
+
+## Detection Logic Overview
+
+Vi-Notes uses a layered pipeline:
+
+1. Feature extraction from typing and text behavior
+2. ML adapter prediction attempt (currently placeholder)
+3. Rule-based scoring fallback
+4. Segment detection using paste ranges + behavior heuristics
+
+This approach allows immediate functionality today and future ML model upgrades without changing API contracts.
+
+## Privacy Notes
+
+- No raw key content logging; tokenized keystroke events are used
+- Metadata focus: timing, delays, edit patterns, paste ranges
+- Public verification requires explicit session sharing
+
+## Upcoming Features
+
+- Stronger ML models for behavior-text correlation
+- Better anomaly calibration per user writing profile
+- Expanded report explainability and evidence visuals
+- Improved desktop-level capture workflows
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License
