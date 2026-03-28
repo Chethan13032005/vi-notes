@@ -5,6 +5,8 @@ type LoginProps = {
   setUser: (user: AuthUser) => void;
 };
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
 export default function Login({ setUser }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +52,7 @@ export default function Login({ setUser }: LoginProps) {
 
     await withLoading(async () => {
       try {
-        const data = await postJson("http://localhost:5000/auth/login", {
+        const data = await postJson(`${API_BASE_URL}/auth/login`, {
           email: trimmedEmail,
           password
         });
@@ -73,7 +75,7 @@ export default function Login({ setUser }: LoginProps) {
 
     await withLoading(async () => {
       try {
-        await postJson("http://localhost:5000/auth/register", {
+        await postJson(`${API_BASE_URL}/auth/register`, {
           email: trimmedEmail,
           password
         });

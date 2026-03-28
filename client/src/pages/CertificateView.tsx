@@ -33,6 +33,8 @@ type VerifyResponse = {
   }>;
 };
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
 function toEpochMs(value?: string | number): number | null {
   if (value === undefined || value === null) return null;
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
@@ -74,7 +76,7 @@ export default function CertificateView() {
 
       try {
         const response = await fetch(
-          "http://localhost:5000/api/verify/" + encodeURIComponent(certificateId),
+          `${API_BASE_URL}/api/verify/` + encodeURIComponent(certificateId),
           { signal: controller.signal }
         );
 

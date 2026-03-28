@@ -9,6 +9,8 @@ type EditorProps = {
   onLogout: () => void;
 };
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
 export default function Editor({ user, onLogout }: EditorProps) {
   const [text, setText] = useState("");
   const [keystrokes, setKeystrokes] = useState<KeystrokeEvent[]>([]);
@@ -178,7 +180,7 @@ export default function Editor({ user, onLogout }: EditorProps) {
 
   const loadSessions = async () => {
     try {
-      const data = await getJson(`http://localhost:5000/api/sessions/user/${user._id}`);
+      const data = await getJson(`${API_BASE_URL}/api/sessions/user/${user._id}`);
       const nextSessions = Array.isArray(data) ? data : [];
       setSessions(nextSessions);
       setSelectedSession((previous) => {
@@ -247,7 +249,7 @@ export default function Editor({ user, onLogout }: EditorProps) {
         pasteEvents
       };
 
-      const data = await postJson("http://localhost:5000/api/sessions/save", payload);
+      const data = await postJson(`${API_BASE_URL}/api/sessions/save`, payload);
 
       setAnalysis(data.analysis || null);
       setStatus("Session saved successfully.");
@@ -272,7 +274,7 @@ export default function Editor({ user, onLogout }: EditorProps) {
     try {
       setIsSharing(true);
       const result = await putJson(
-        `http://localhost:5000/api/sessions/${selectedSession._id}/share`
+        `${API_BASE_URL}/api/sessions/${selectedSession._id}/share`
       );
 
       const certificateId =
