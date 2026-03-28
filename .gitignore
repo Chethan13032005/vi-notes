@@ -19,6 +19,9 @@ client/.env
 client/.env.*
 server/.env
 server/.env.*
+!.env.example
+!client/.env.example
+!server/.env.example
 
 # OS/editor
 .DS_Store
