@@ -17,6 +17,10 @@ app.get("/health", (_, res) => {
 	res.json({ status: "ok" });
 });
 
+app.get("/", (_, res) => {
+	res.json({ status: "ok", service: "vi-notes-api" });
+});
+
 app.use("/auth", require("./routes/auth"));
 app.use("/api/sessions", requireAuth, require("./routes/session"));
 app.use("/api/verify", require("./routes/verify"));
@@ -26,4 +30,4 @@ app.use((err, _req, res, _next) => {
 	res.status(500).json({ message: "Internal server error" });
 });
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`Server running on ${PORT}`));
