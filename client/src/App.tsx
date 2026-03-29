@@ -12,6 +12,7 @@ import "./App.css";
 
 export type AuthUser = {
   _id: string;
+  name?: string;
   email: string;
   token: string; // Added for JWT token support
 };
@@ -31,7 +32,7 @@ function App() {
               <Navigate to="/dashboard" replace />
             ) : (
               <div className="app-shell">
-                <Login setUser={setUser} />
+                <Login setUser={setUser} mode="login" />
               </div>
             )
           }
@@ -44,7 +45,7 @@ function App() {
               <Navigate to="/dashboard" replace />
             ) : (
               <div className="app-shell">
-                <Login setUser={setUser} />
+                <Login setUser={setUser} mode="register" />
               </div>
             )
           }

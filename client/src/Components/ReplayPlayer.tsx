@@ -317,6 +317,7 @@ export default function ReplayPlayer({
             type="button"
             onClick={() => setIsPlaying((prev) => !prev)}
             disabled={replayEvents.length === 0 || completed}
+            aria-label={isPlaying ? "Pause replay" : "Play replay"}
           >
             {isPlaying ? "Pause" : "Play"}
           </button>
@@ -324,6 +325,7 @@ export default function ReplayPlayer({
             type="button"
             onClick={resetReplay}
             className="muted-btn"
+            aria-label="Reset replay"
           >
             Reset
           </button>
@@ -339,6 +341,7 @@ export default function ReplayPlayer({
           <select
             value={String(playbackRate)}
             onChange={(e) => setPlaybackRate(Number(e.target.value) || 1)}
+            aria-label="Replay speed"
           >
             <option value="0.5">0.5x</option>
             <option value="1">1x</option>

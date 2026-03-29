@@ -3,9 +3,13 @@
   --card: #ffffff;
   --ink: #0f172a;
   --muted: #64748b;
-  --brand: #0ea5a4;
-  --brand-deep: #0f766e;
+  --brand: #0b8ac9;
+  --brand-deep: #0a5e89;
+  --brand-soft: #e6f4fb;
   --line: #dbe3ec;
+  --focus-ring: rgba(11, 138, 201, 0.3);
+  --danger: #dc2626;
+  --danger-deep: #991b1b;
 }
 
 * {
@@ -14,7 +18,10 @@
 
 .app-shell {
   min-height: 100vh;
-  background: linear-gradient(135deg, #eef4ff 0%, #f6fff8 100%);
+  background:
+    radial-gradient(circle at 10% 8%, rgba(11, 138, 201, 0.12), transparent 42%),
+    radial-gradient(circle at 92% 0%, rgba(34, 197, 94, 0.1), transparent 40%),
+    linear-gradient(140deg, #eef5ff 0%, #f5fbff 56%, #f7fbf9 100%);
   color: var(--ink);
   padding: 24px;
 }
@@ -36,8 +43,24 @@
 }
 
 .auth-card {
-  max-width: 420px;
+  max-width: 520px;
   margin: 64px auto;
+  border: 1px solid #cfe4f3;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+}
+
+.auth-card h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  color: #0f3150;
+}
+
+.auth-card-login {
+  box-shadow: 0 16px 30px rgba(10, 94, 137, 0.11);
+}
+
+.auth-card-register {
+  box-shadow: 0 16px 30px rgba(15, 118, 110, 0.11);
 }
 
 .auth-card h1,
@@ -59,6 +82,10 @@ button {
   font: inherit;
 }
 
+select {
+  font: inherit;
+}
+
 input,
 textarea {
   width: 100%;
@@ -73,6 +100,14 @@ textarea {
   line-height: 1.5;
 }
 
+input:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
 button {
   border: none;
   border-radius: 8px;
@@ -81,6 +116,15 @@ button {
   background: var(--brand);
   color: #ffffff;
   font-weight: 600;
+}
+
+.danger-btn {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.danger-btn:hover {
+  background: var(--danger-deep);
 }
 
 button:hover {
@@ -113,12 +157,151 @@ button:disabled {
 
 .status-text {
   color: #0f766e;
+  margin: 0;
+}
+
+.status-banner {
   margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #99f6e4;
+  background: #f0fdfa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.auth-message {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0c4a6e;
+}
+
+.auth-actions {
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.auth-switch-link {
+  color: #0f4f77;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.auth-switch-link:hover {
+  text-decoration: underline;
+}
+
+.password-hints {
+  border: 1px dashed #c4ddeb;
+  background: #f8fcff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: -2px 0 8px;
+}
+
+.password-hints p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.hint-ok {
+  color: #166534;
+}
+
+.hint-pending {
+  color: #6b7280;
+}
+
+.status-dismiss {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.editor-toolbar {
+  margin: 10px 0 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f2f9ff 100%);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  font-weight: 700;
+}
+
+.control-group select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.control-range input {
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.editor-mode-chip {
+  margin: 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0c4a6e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.editor-card {
+  --editor-font-family: "Segoe UI Variable", "Trebuchet MS", "Segoe UI", sans-serif;
+  --editor-font-size: 16px;
+  --editor-line-height: 1.55;
+}
+
+.editor-card .editor-textarea,
+.editor-card .annotated-text,
+.editor-card .replay-output {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+  line-height: var(--editor-line-height);
+}
+
+.editor-readonly {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
 }
 
 .session-list {
   max-height: 88vh;
   overflow: auto;
+}
+
+.session-count {
+  margin: -2px 0 10px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .session-item {
@@ -131,6 +314,13 @@ button:disabled {
   background: #f8fafc;
   border: 1px solid var(--line);
   color: #0f172a;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.session-item:hover {
+  border-color: #99c9df;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
 .session-item-top {
@@ -138,6 +328,17 @@ button:disabled {
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+}
+
+.session-item-actions-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-item-actions-top .danger-btn {
+  padding: 6px 8px;
+  font-size: 11px;
 }
 
 .session-meta {
@@ -163,8 +364,8 @@ button:disabled {
 }
 
 .session-item.active {
-  border-color: #14b8a6;
-  background: #ecfeff;
+  border-color: #0b8ac9;
+  background: #edf7ff;
 }
 
 .session-item span {
@@ -177,7 +378,37 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px;
-  background: #f8fafc;
+  background: linear-gradient(180deg, #f9fcff 0%, #f8fafc 100%);
+}
+
+.report-tabs {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.report-tab-btn {
+  background: #e6f0f7;
+  color: #18415d;
+  border: 1px solid #c2d8e8;
+  white-space: nowrap;
+}
+
+.report-tab-btn:hover {
+  background: #d8e9f5;
+}
+
+.report-tab-btn.active {
+  background: linear-gradient(135deg, #0b8ac9 0%, #0f766e 100%);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.report-panel {
+  margin-top: 8px;
+  min-height: 280px;
 }
 
 .report-box h3 {
@@ -255,6 +486,22 @@ button:disabled {
 
 .share-actions {
   flex-wrap: wrap;
+}
+
+.session-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.session-open-btn {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.session-item-actions .danger-btn {
+  padding: 7px 10px;
+  font-size: 12px;
 }
 
 .certificate-chip {
@@ -499,6 +746,23 @@ button:disabled {
 @media (max-width: 900px) {
   .workspace-grid {
     grid-template-columns: 1fr;
+  }
+
+  .editor-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-switch-link {
+    text-align: center;
+  }
+
+  .report-tabs {
+    gap: 6px;
   }
 
   .certificate-metrics {
