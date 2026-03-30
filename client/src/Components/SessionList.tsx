@@ -17,6 +17,7 @@ type SessionListProps = {
   selectedSessionId: string | null;
   onSelect: (session: SessionRecord) => void;
   onDelete: (session: SessionRecord) => void;
+  panelHeight?: number | null;
 };
 
 function previewText(text: string) {
@@ -34,10 +35,11 @@ export default function SessionList({
   sessions,
   selectedSessionId,
   onSelect,
-  onDelete
+  onDelete,
+  panelHeight
 }: SessionListProps) {
   return (
-    <div className="card session-list">
+    <div className="card session-list" style={panelHeight ? { height: `${Math.max(320, Math.floor(panelHeight))}px` } : undefined}>
       <h2>Previous Sessions</h2>
       <p className="session-count">{sessions.length} total session(s)</p>
       {sessions.length === 0 ? <p>No sessions saved yet.</p> : null}

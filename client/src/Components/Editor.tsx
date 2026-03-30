@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthUser } from "../App";
 import SessionList, { SessionRecord } from "./SessionList";
 import { Analysis, KeystrokeEvent, KeystrokeToken, PasteEvent, RawSessionData } from "../types/contracts";
@@ -52,6 +52,8 @@ export default function Editor({ user, onLogout }: EditorProps) {
   const [editorFontSize, setEditorFontSize] = useState(16);
   const [editorLineHeight, setEditorLineHeight] = useState(1.55);
   const [activeReportTab, setActiveReportTab] = useState<ReportTabKey>("authenticity");
+  const [sessionListHeight, setSessionListHeight] = useState<number | null>(null);
+  const editorCardRef = useRef<HTMLDivElement>(null);
   const statusTone = useMemo(() => {
     const value = status.toLowerCase();
     if (!value) return "success";
@@ -275,6 +277,22 @@ export default function Editor({ user, onLogout }: EditorProps) {
     loadSessions();
   }, [user._id]);
 
+  useEffect(() => {
+    const element = editorCardRef.current;
+    if (!element) return;
+
+    const updateHeight = () => {
+      setSessionListHeight(element.clientHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [editorFontSize, editorLineHeight, activeReportTab, selectedSession, status]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const now = Date.now();
     const token = toToken(e.key);
@@ -480,9 +498,10 @@ export default function Editor({ user, onLogout }: EditorProps) {
         selectedSessionId={selectedSession?._id || null}
         onSelect={openSession}
         onDelete={deleteSession}
+        panelHeight={sessionListHeight}
       />
 
-      <div className="card editor-card" style={editorTypographyStyle}>
+      <div className="card editor-card" style={editorTypographyStyle} ref={editorCardRef}>
         <div className="row space-between">
           <div>
             <h2>Writing Editor</h2>

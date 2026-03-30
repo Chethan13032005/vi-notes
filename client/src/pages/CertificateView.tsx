@@ -49,6 +49,30 @@ function formatDuration(ms: number): string {
   return minutes + "m " + String(seconds).padStart(2, "0") + "s";
 }
 
+function getScoreTier(score: number) {
+  if (score >= 90) return { label: "Excellent", className: "tier-excellent" };
+  if (score >= 75) return { label: "Great", className: "tier-great" };
+  if (score >= 60) return { label: "Good", className: "tier-good" };
+  if (score >= 40) return { label: "Fair", className: "tier-fair" };
+  return { label: "Low", className: "tier-low" };
+}
+
+function getCompliment(score: number): string {
+  if (score >= 90) {
+    return "Outstanding authenticity. This writing shows a highly natural composition pattern.";
+  }
+  if (score >= 75) {
+    return "Excellent work. Strong signs of human writing rhythm were detected.";
+  }
+  if (score >= 60) {
+    return "Good result. Most signals indicate natural writing behavior.";
+  }
+  if (score >= 40) {
+    return "Fair confidence. Some sections look natural while a few need review.";
+  }
+  return "Low confidence. The document has several non-natural writing signals.";
+}
+
 export default function CertificateView() {
   const [data, setData] = useState<VerifyResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
@@ -156,6 +180,11 @@ export default function CertificateView() {
     }
   };
 
+  const scoreTier = useMemo(
+    () => getScoreTier(Number.isFinite(Number(data?.score)) ? Number(data?.score) : 0),
+    [data?.score]
+  );
+
   return (
     <main className="certificate-page">
       <div className="certificate-shell">
@@ -186,11 +215,15 @@ export default function CertificateView() {
 
         {status === "success" && data ? (
           <section className="certificate-section">
-            <div className="card certificate-score-card">
+            <div className={`card certificate-score-card ${scoreTier.className}`}>
               <p className="kicker">
                 Authenticity Score
               </p>
               <div className="certificate-score">{Math.round(data.score)}%</div>
+              <p className="certificate-compliment">{getCompliment(data.score)}</p>
+              <p className={`certificate-tier ${scoreTier.className}`}>
+                {scoreTier.label} Authenticity
+              </p>
             </div>
 
             <div className="certificate-metrics">
