@@ -50,6 +50,7 @@ router.post("/save", async (req, res) => {
       keystrokes,
       pasteEvents,
       analysis,
+      score: typeof analysis?.score === "number" ? analysis.score : 0,
       createdAt: new Date()
     });
 
@@ -57,7 +58,8 @@ router.post("/save", async (req, res) => {
     return res.status(201).json({
       message: "Saved",
       sessionId: session._id,
-      analysis: session.analysis
+      analysis: session.analysis,
+      score: session.score
     });
   } catch (error) {
     return res.status(500).json({ message: "Failed to save session" });
@@ -118,6 +120,30 @@ router.put("/:id/share", async (req, res) => {
     });
   } catch (_error) {
     return res.status(500).json({ message: "Failed to share session" });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid session id" });
+    }
+
+    const session = await Session.findById(id);
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    if (!req.user || String(req.user.id) !== String(session.userId)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await Session.deleteOne({ _id: id });
+    return res.status(200).json({ message: "Session deleted successfully" });
+  } catch (_error) {
+    return res.status(500).json({ message: "Failed to delete session" });
   }
 });
 

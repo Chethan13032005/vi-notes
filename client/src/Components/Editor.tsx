@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthUser } from "../App";
 import SessionList, { SessionRecord } from "./SessionList";
 import { Analysis, KeystrokeEvent, KeystrokeToken, PasteEvent, RawSessionData } from "../types/contracts";
@@ -11,6 +11,32 @@ type EditorProps = {
 
 const API_BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
+type EditorFontKey = "system" | "mono" | "serif" | "humanist";
+type ReportTabKey = "authenticity" | "detection" | "session" | "replay";
+
+const EDITOR_FONT_OPTIONS: Array<{ value: EditorFontKey; label: string; family: string }> = [
+  {
+    value: "system",
+    label: "System Sans",
+    family: '"Segoe UI Variable", "Trebuchet MS", "Segoe UI", sans-serif'
+  },
+  {
+    value: "mono",
+    label: "Coding Mono",
+    family: '"Cascadia Code", "Consolas", "Courier New", monospace'
+  },
+  {
+    value: "serif",
+    label: "Classic Serif",
+    family: '"Cambria", "Times New Roman", serif'
+  },
+  {
+    value: "humanist",
+    label: "Humanist",
+    family: '"Gill Sans", "Segoe UI", "Trebuchet MS", sans-serif'
+  }
+];
+
 export default function Editor({ user, onLogout }: EditorProps) {
   const [text, setText] = useState("");
   const [keystrokes, setKeystrokes] = useState<KeystrokeEvent[]>([]);
@@ -22,6 +48,41 @@ export default function Editor({ user, onLogout }: EditorProps) {
   const [status, setStatus] = useState("");
   const [shareLink, setShareLink] = useState("");
   const [isSharing, setIsSharing] = useState(false);
+  const [editorFont, setEditorFont] = useState<EditorFontKey>("system");
+  const [editorFontSize, setEditorFontSize] = useState(16);
+  const [editorLineHeight, setEditorLineHeight] = useState(1.55);
+  const [activeReportTab, setActiveReportTab] = useState<ReportTabKey>("authenticity");
+  const [sessionListHeight, setSessionListHeight] = useState<number | null>(null);
+  const editorCardRef = useRef<HTMLDivElement>(null);
+  const statusTone = useMemo(() => {
+    const value = status.toLowerCase();
+    if (!value) return "success";
+    if (
+      value.includes("failed") ||
+      value.includes("invalid") ||
+      value.includes("forbidden") ||
+      value.includes("error") ||
+      value.includes("could not") ||
+      value.includes("no ") ||
+      value.includes("not found") ||
+      value.includes("mismatch")
+    ) {
+      return "error";
+    }
+    return "success";
+  }, [status]);
+
+  const editorTypographyStyle = useMemo(
+    () =>
+      ({
+        ["--editor-font-family" as string]:
+          EDITOR_FONT_OPTIONS.find((option) => option.value === editorFont)?.family ||
+          EDITOR_FONT_OPTIONS[0].family,
+        ["--editor-font-size" as string]: `${editorFontSize}px`,
+        ["--editor-line-height" as string]: String(editorLineHeight)
+      }) as React.CSSProperties,
+    [editorFont, editorFontSize, editorLineHeight]
+  );
 
   const avgDelay = useMemo(() => {
     if (keystrokes.length === 0) return 0;
@@ -152,6 +213,24 @@ export default function Editor({ user, onLogout }: EditorProps) {
     return data;
   };
 
+  const deleteJson = async (url: string) => {
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${user.token}`
+      }
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error: any = new Error(data?.message || "Request failed");
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+    return data;
+  };
+
   const getJson = async (url: string) => {
     const response = await fetch(url, {
       headers: {
@@ -197,6 +276,22 @@ export default function Editor({ user, onLogout }: EditorProps) {
   useEffect(() => {
     loadSessions();
   }, [user._id]);
+
+  useEffect(() => {
+    const element = editorCardRef.current;
+    if (!element) return;
+
+    const updateHeight = () => {
+      setSessionListHeight(element.clientHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [editorFontSize, editorLineHeight, activeReportTab, selectedSession, status]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const now = Date.now();
@@ -263,6 +358,31 @@ export default function Editor({ user, onLogout }: EditorProps) {
     setSelectedSession(session);
     setAnalysis(session.analysis || null);
     setShareLink(session.certificateId ? `${window.location.origin}/verify/${session.certificateId}` : "");
+    setActiveReportTab("session");
+  };
+
+  const deleteSession = async (session: SessionRecord) => {
+    const confirmed = window.confirm("Delete this session permanently? This action cannot be undone.");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteJson(`${API_BASE_URL}/api/sessions/${session._id}`);
+
+      setSessions((prev) => prev.filter((item) => item._id !== session._id));
+
+      if (selectedSession?._id === session._id) {
+        setSelectedSession(null);
+        setAnalysis(null);
+        setShareLink("");
+        setActiveReportTab("authenticity");
+      }
+
+      setStatus("Session deleted successfully.");
+    } catch (error: any) {
+      setStatus(error?.data?.message || error?.message || "Failed to delete session.");
+    }
   };
 
   const shareSelectedSession = async () => {
@@ -361,9 +481,14 @@ export default function Editor({ user, onLogout }: EditorProps) {
 
   const useLiveEditor = () => {
     setSelectedSession(null);
+    setText("");
+    setKeystrokes([]);
+    setLastTime(null);
+    setPasteEvents([]);
     setAnalysis(null);
     setStatus("");
     setShareLink("");
+    setActiveReportTab("authenticity");
   };
 
   return (
@@ -372,9 +497,11 @@ export default function Editor({ user, onLogout }: EditorProps) {
         sessions={sessions}
         selectedSessionId={selectedSession?._id || null}
         onSelect={openSession}
+        onDelete={deleteSession}
+        panelHeight={sessionListHeight}
       />
 
-      <div className="card editor-card">
+      <div className="card editor-card" style={editorTypographyStyle} ref={editorCardRef}>
         <div className="row space-between">
           <div>
             <h2>Writing Editor</h2>
@@ -387,15 +514,54 @@ export default function Editor({ user, onLogout }: EditorProps) {
           </div>
         </div>
 
-        <textarea
-          rows={14}
-          value={text}
-          disabled={!liveMode}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          placeholder="Start writing naturally. Typing rhythm and paste metadata will be tracked."
-        />
+        <div className="editor-toolbar" aria-label="Editor typography controls">
+          <label className="control-group">
+            Font
+            <select
+              value={editorFont}
+              onChange={(e) => setEditorFont(e.target.value as EditorFontKey)}
+              aria-label="Select editor font"
+            >
+              {EDITOR_FONT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="control-group control-range">
+            Size: {editorFontSize}px
+            <input
+              type="range"
+              min={13}
+              max={22}
+              step={1}
+              value={editorFontSize}
+              onChange={(e) => setEditorFontSize(Number(e.target.value) || 16)}
+              aria-label="Adjust editor font size"
+            />
+          </label>
+
+          <label className="control-group control-range">
+            Line Height: {editorLineHeight.toFixed(2)}
+            <input
+              type="range"
+              min={1.35}
+              max={2}
+              step={0.05}
+              value={editorLineHeight}
+              onChange={(e) => setEditorLineHeight(Number(e.target.value) || 1.55)}
+              aria-label="Adjust editor line height"
+            />
+          </label>
+        </div>
+
+        {!liveMode ? (
+          <p className="editor-mode-chip" role="note">
+            Viewing a saved session in read-only mode. Click New Live Session to continue capturing keystrokes.
+          </p>
+        ) : null}
 
         <div className="row">
           <button onClick={save} disabled={!liveMode}>
@@ -409,100 +575,189 @@ export default function Editor({ user, onLogout }: EditorProps) {
           </button>
         </div>
 
-        {status ? <p className="status-text">{status}</p> : null}
+        <textarea
+          className={`editor-textarea ${liveMode ? "" : "editor-readonly"}`.trim()}
+          rows={14}
+          value={text}
+          disabled={!liveMode}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          aria-label="Writing editor"
+          placeholder="Start writing naturally. Typing rhythm and paste metadata will be tracked."
+        />
 
-        <div className="report-box">
-          <h3>Authenticity Report</h3>
-          <p>
-            <strong>Score:</strong> {analysis ? `${analysis.score}%` : "Not analyzed yet"}
-          </p>
-          <p>
-            <strong>Total Keystrokes:</strong> {activeKeystrokes.length}
-          </p>
-          <p>
-            <strong>Paste Count:</strong> {activePasteEvents.length}
-          </p>
-          <p>
-            <strong>Average Typing Delay:</strong> {Math.round(liveMode ? avgDelay : activeAvgDelay)} ms
-          </p>
-          <p>
-            <strong>Inference:</strong>{" "}
-            {analysis?.model?.used
-              ? `ML adapter (${analysis.model.provider || "tensorflow-js"})`
-              : "Rule-based (ML fallback)"}
-          </p>
-
-          <ul>
-            {(analysis?.reasons || ["Save a session to view analysis reasons."]).map((reason, index) => (
-              <li key={`${reason}-${index}`}>{reason}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="report-box">
-          <h3>Detection Map</h3>
-          <div className="legend-row">
-            <span className="legend-item legend-normal">Normal</span>
-            <span className="legend-item legend-copied">Copy/Paste</span>
-            <span className="legend-item legend-ai">AI-suspect</span>
+        {status ? (
+          <div className={`status-banner ${statusTone}`} role="status" aria-live="polite">
+            <p className="status-text">{status}</p>
+            <button
+              type="button"
+              className="muted-btn status-dismiss"
+              onClick={() => setStatus("")}
+              aria-label="Dismiss status message"
+            >
+              Dismiss
+            </button>
           </div>
-          <p className="hint-text">
-            Underlined ranges indicate detected behavior regions. Hover a highlighted section to see why it was labeled.
-          </p>
-          <div className="annotated-text">{renderSegments}</div>
+        ) : null}
 
-          <ul>
-            {(analysis?.segments || []).slice(0, 8).map((segment, index) => (
-              <li key={`${segment.label}-${segment.start}-${index}`}>
-                {segment.label.toUpperCase()} range {segment.start} to {segment.end}: {segment.reason}
-              </li>
-            ))}
-          </ul>
+      </div>
+
+      <div className="card report-nav-card" role="tablist" aria-label="Session report sections">
+        <h2>Reports</h2>
+        <p className="session-count">Select one report view</p>
+        <div className="report-nav-list">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeReportTab === "authenticity"}
+            className={`report-nav-btn ${activeReportTab === "authenticity" ? "active" : ""}`}
+            onClick={() => setActiveReportTab("authenticity")}
+          >
+            Authenticity Score
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeReportTab === "detection"}
+            className={`report-nav-btn ${activeReportTab === "detection" ? "active" : ""}`}
+            onClick={() => setActiveReportTab("detection")}
+          >
+            Detection Map
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeReportTab === "session"}
+            className={`report-nav-btn ${activeReportTab === "session" ? "active" : ""}`}
+            onClick={() => setActiveReportTab("session")}
+          >
+            Selected Session Details
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeReportTab === "replay"}
+            className={`report-nav-btn ${activeReportTab === "replay" ? "active" : ""}`}
+            onClick={() => setActiveReportTab("replay")}
+          >
+            Replay Preview
+          </button>
         </div>
+      </div>
 
-        {selectedSession ? (
-          <div className="report-box">
-            <h3>Selected Session Details</h3>
-            <p>
-              <strong>Created:</strong> {new Date(selectedSession.createdAt).toLocaleString()}
-            </p>
-            <p>
-              <strong>Certificate:</strong>{" "}
-              {selectedSession.certificateId
-                ? selectedSession.certificateId
-                : "Not shared yet"}
-            </p>
-            {selectedSession.certificateId ? (
-              <p className="certificate-chip">Public certificate is active for this session.</p>
-            ) : null}
-            <p>
-              <strong>Text Length:</strong> {activeText.length}
-            </p>
-            <div className="row share-actions">
-              <button onClick={shareSelectedSession} disabled={isSharing}>
-                {selectedSession.certificateId ? "Refresh Share Link" : "Share Session"}
-              </button>
-              <button className="muted-btn" onClick={openCertificate}>
-                Open Certificate View
-              </button>
-              <button className="muted-btn" onClick={copyShareLink} disabled={!shareLink}>
-                Copy Link
-              </button>
-            </div>
-            {shareLink ? <p className="hint-text">Certificate URL: {shareLink}</p> : null}
-            <textarea rows={8} value={activeText} readOnly />
+      <div className="card report-view-card">
+        <div className="report-box report-panel" role="tabpanel">
+          {activeReportTab === "authenticity" ? (
+            <>
+              <h3>Authenticity Report</h3>
+              <p>
+                <strong>Score:</strong> {analysis ? `${analysis.score}%` : "Not analyzed yet"}
+              </p>
+              <p>
+                <strong>Total Keystrokes:</strong> {activeKeystrokes.length}
+              </p>
+              <p>
+                <strong>Paste Count:</strong> {activePasteEvents.length}
+              </p>
+              <p>
+                <strong>Average Typing Delay:</strong> {Math.round(liveMode ? avgDelay : activeAvgDelay)} ms
+              </p>
+              <p>
+                <strong>Inference:</strong>{" "}
+                {analysis?.model?.used
+                  ? `ML adapter (${analysis.model.provider || "tensorflow-js"})`
+                  : "Rule-based (ML fallback)"}
+              </p>
 
-            <div style={{ marginTop: 16 }}>
+              <ul>
+                {(analysis?.reasons || ["Save a session to view analysis reasons."]).map((reason, index) => (
+                  <li key={`${reason}-${index}`}>{reason}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+
+          {activeReportTab === "detection" ? (
+            <>
+              <h3>Detection Map</h3>
+              <div className="legend-row">
+                <span className="legend-item legend-normal">Normal</span>
+                <span className="legend-item legend-copied">Copy/Paste</span>
+                <span className="legend-item legend-ai">AI-suspect</span>
+              </div>
+              <p className="hint-text">
+                Underlined ranges indicate detected behavior regions. Hover a highlighted section to see why it was labeled.
+              </p>
+              <div className="annotated-text">{renderSegments}</div>
+
+              <ul>
+                {(analysis?.segments || []).slice(0, 8).map((segment, index) => (
+                  <li key={`${segment.label}-${segment.start}-${index}`}>
+                    {segment.label.toUpperCase()} range {segment.start} to {segment.end}: {segment.reason}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+
+          {activeReportTab === "session" ? (
+            selectedSession ? (
+              <>
+                <h3>Selected Session Details</h3>
+                <p>
+                  <strong>Created:</strong> {new Date(selectedSession.createdAt).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Certificate:</strong>{" "}
+                  {selectedSession.certificateId
+                    ? selectedSession.certificateId
+                    : "Not shared yet"}
+                </p>
+                {selectedSession.certificateId ? (
+                  <p className="certificate-chip">Public certificate is active for this session.</p>
+                ) : null}
+                <p>
+                  <strong>Text Length:</strong> {activeText.length}
+                </p>
+                <div className="row share-actions">
+                  <button onClick={shareSelectedSession} disabled={isSharing}>
+                    {selectedSession.certificateId ? "Refresh Share Link" : "Share Session"}
+                  </button>
+                  <button className="muted-btn" onClick={openCertificate}>
+                    Open Certificate View
+                  </button>
+                  <button className="muted-btn" onClick={copyShareLink} disabled={!shareLink}>
+                    Copy Link
+                  </button>
+                  <button className="danger-btn" onClick={() => deleteSession(selectedSession)}>
+                    Delete Session
+                  </button>
+                </div>
+                {shareLink ? <p className="hint-text">Certificate URL: {shareLink}</p> : null}
+                <textarea className="editor-textarea" rows={8} value={activeText} readOnly aria-label="Selected session text" />
+              </>
+            ) : (
+              <>
+                <h3>Selected Session Details</h3>
+                <p className="hint-text">Select a saved session from the left panel to see details, share options, and deletion actions.</p>
+              </>
+            )
+          ) : null}
+
+          {activeReportTab === "replay" ? (
+            <>
               <h3>Replay Preview</h3>
+              <p className="hint-text">Replay shows how the current draft or selected session was composed over time.</p>
               <ReplayPlayer
                 finalContent={activeText}
                 keystrokes={activeKeystrokes}
                 pasteEvents={activePasteEvents}
                 segments={analysis?.segments}
               />
-            </div>
-          </div>
-        ) : null}
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );
