@@ -70,47 +70,70 @@ After each save, the system generates an authenticity report with score, reasons
 ## Project Structure
 
 ```text
-vi-notes/
-|-- README.md
-|-- LICENSE
-|-- client/
-|   |-- package.json
-|   |-- electron.js
-|   |-- public/
-|   |-- src/
-|   |   |-- App.tsx
-|   |   |-- App.css
-|   |   |-- Components/
-|   |   |   |-- Login.tsx
-|   |   |   |-- Editor.tsx
-|   |   |   |-- SessionList.tsx
-|   |   |   |-- ReplayPlayer.tsx
-|   |   |-- pages/
-|   |   |   |-- CertificateView.tsx
-|   |   |-- types/
-|   |       |-- contracts.ts
-|-- server/
-|   |-- package.json
-|   |-- config.js
-|   |-- index.js
-|   |-- middleware/
-|   |   |-- requireAuth.js
-|   |-- models/
-|   |   |-- User.js
-|   |   |-- Session.js
-|   |-- routes/
-|   |   |-- auth.js
-|   |   |-- session.js
-|   |   |-- verify.js
-|   |-- ml/
-|   |   |-- analyzer.js
-|   |   |-- featureExtractor.js
-|   |   |-- segmentDetector.js
-|   |   |-- adapters/
-|   |       |-- tensorflowAdapter.js
-|   |-- utils/
-|       |-- analyze.js
-|       |-- validateRawSessionData.js
+Directory structure:
+└── chethan13032005-vi-notes/
+    ├── README.md
+    ├── LICENSE
+    ├── client/
+    │   ├── README.md
+    │   ├── electron.js
+    │   ├── package.json
+    │   ├── tsconfig.json
+    │   ├── .env.example
+    │   ├── public/
+    │   │   ├── index.html
+    │   │   ├── manifest.json
+    │   │   └── robots.txt
+    │   └── src/
+    │       ├── App.css
+    │       ├── App.test.tsx
+    │       ├── App.tsx
+    │       ├── index.css
+    │       ├── index.tsx
+    │       ├── react-app-env.d.ts
+    │       ├── reportWebVitals.ts
+    │       ├── setupTests.ts
+    │       ├── __mocks__/
+    │       │   └── @vercel/
+    │       │       └── speed-insights/
+    │       │           └── react.tsx
+    │       ├── Components/
+    │       │   ├── Editor.tsx
+    │       │   ├── Login.tsx
+    │       │   ├── ReplayPlayer.tsx
+    │       │   └── SessionList.tsx
+    │       ├── pages/
+    │       │   └── CertificateView.tsx
+    │       └── types/
+    │           └── contracts.ts
+    └── server/
+        ├── config.js
+        ├── index.js
+        ├── package.json
+        ├── .env.example
+        ├── controllers/
+        │   └── session.controller.ts
+        ├── middleware/
+        │   └── requireAuth.js
+        ├── ml/
+        │   ├── analyzer.js
+        │   ├── featureExtractor.js
+        │   ├── segmentDetector.js
+        │   └── adapters/
+        │       └── tensorflowAdapter.js
+        ├── models/
+        │   ├── Session.js
+        │   ├── Session.ts
+        │   └── User.js
+        ├── routes/
+        │   ├── auth.js
+        │   ├── session.js
+        │   ├── session.routes.ts
+        │   └── verify.js
+        └── utils/
+            ├── analyze.js
+            └── validateRawSessionData.js
+
 ```
 
 ## Installation
@@ -313,6 +336,11 @@ This approach allows immediate functionality today and future ML model upgrades 
 - Better anomaly calibration per user writing profile
 - Expanded report explainability and evidence visuals
 - Improved desktop-level capture workflows
+
+## Architectural view of vi-notes
+<img width="4088" height="9844" alt="diagram" src="https://github.com/user-attachments/assets/85f64f28-1b83-4fcf-b54d-96b4eb3ec105" />
+
+
 
 ## License
 
