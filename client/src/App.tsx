@@ -5,6 +5,7 @@ import {
   Route,
   Routes
 } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Login from "./Components/Login";
 import Editor from "./Components/Editor";
 import CertificateView from "./pages/CertificateView";
@@ -69,6 +70,7 @@ function App() {
           element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
         />
       </Routes>
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
