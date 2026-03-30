@@ -337,6 +337,10 @@ This approach allows immediate functionality today and future ML model upgrades 
 - Expanded report explainability and evidence visuals
 - Improved desktop-level capture workflows
 
+## Sequence diagram of vi-notes
+![Sequence_diagram](https://github.com/user-attachments/assets/ae2d34df-acb3-433d-80cd-e0d7c84fb5f0)
+
+
 ## Architectural view of vi-notes
 <img width="4088" height="9844" alt="diagram" src="https://github.com/user-attachments/assets/85f64f28-1b83-4fcf-b54d-96b4eb3ec105" />
 
