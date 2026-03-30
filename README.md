@@ -11,7 +11,7 @@ Mentor: Jinal Gupta
 Vi-Notes records writing-session metadata while a user types in a clean editor. It then analyzes:
 
 - Keystroke timing rhythm
-- Editing behavior (deletions, pauses, corrections)
+- Editing behavior (pauses, corrections)
 - Paste activity ranges
 - Text structure and consistency signals
 
@@ -71,49 +71,46 @@ After each save, the system generates an authenticity report with score, reasons
 
 ```text
 vi-notes/
-	README.md
-	LICENSE
-
-	client/
-		package.json
-		electron.js
-		public/
-		src/
-			App.tsx
-			App.css
-			Components/
-				Login.tsx
-				Editor.tsx
-				SessionList.tsx
-				ReplayPlayer.tsx
-			pages/
-				CertificateView.tsx
-			types/
-				contracts.ts
-
-	server/
-		package.json
-		.env
-		index.js
-		config.js
-		middleware/
-			requireAuth.js
-		models/
-			User.js
-			Session.js
-		routes/
-			auth.js
-			session.js
-			verify.js
-		ml/
-			analyzer.js
-			featureExtractor.js
-			segmentDetector.js
-			adapters/
-				tensorflowAdapter.js
-		utils/
-			analyze.js
-			validateRawSessionData.js
+|-- README.md
+|-- LICENSE
+|-- client/
+|   |-- package.json
+|   |-- electron.js
+|   |-- public/
+|   |-- src/
+|   |   |-- App.tsx
+|   |   |-- App.css
+|   |   |-- Components/
+|   |   |   |-- Login.tsx
+|   |   |   |-- Editor.tsx
+|   |   |   |-- SessionList.tsx
+|   |   |   |-- ReplayPlayer.tsx
+|   |   |-- pages/
+|   |   |   |-- CertificateView.tsx
+|   |   |-- types/
+|   |       |-- contracts.ts
+|-- server/
+|   |-- package.json
+|   |-- config.js
+|   |-- index.js
+|   |-- middleware/
+|   |   |-- requireAuth.js
+|   |-- models/
+|   |   |-- User.js
+|   |   |-- Session.js
+|   |-- routes/
+|   |   |-- auth.js
+|   |   |-- session.js
+|   |   |-- verify.js
+|   |-- ml/
+|   |   |-- analyzer.js
+|   |   |-- featureExtractor.js
+|   |   |-- segmentDetector.js
+|   |   |-- adapters/
+|   |       |-- tensorflowAdapter.js
+|   |-- utils/
+|       |-- analyze.js
+|       |-- validateRawSessionData.js
 ```
 
 ## Installation
@@ -208,7 +205,7 @@ Base server URL: http://localhost:5000
 ### Auth routes
 
 - POST /auth/register
-	- body: email, password
+	- body: name, email, password, confirmPassword
 	- returns: _id, email, token
 - POST /auth/login
 	- body: email, password
@@ -218,7 +215,7 @@ Base server URL: http://localhost:5000
 
 - POST /api/sessions/save
 	- body: userId, text, keystrokes, pasteEvents
-	- returns: sessionId, analysis
+	- returns: sessionId, analysis, score
 - GET /api/sessions/user/:userId
 	- returns: all sessions for authenticated user
 - PUT /api/sessions/:id/share
