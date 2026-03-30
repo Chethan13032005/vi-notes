@@ -52,6 +52,23 @@ export default function Editor({ user, onLogout }: EditorProps) {
   const [editorFontSize, setEditorFontSize] = useState(16);
   const [editorLineHeight, setEditorLineHeight] = useState(1.55);
   const [activeReportTab, setActiveReportTab] = useState<ReportTabKey>("authenticity");
+  const statusTone = useMemo(() => {
+    const value = status.toLowerCase();
+    if (!value) return "success";
+    if (
+      value.includes("failed") ||
+      value.includes("invalid") ||
+      value.includes("forbidden") ||
+      value.includes("error") ||
+      value.includes("could not") ||
+      value.includes("no ") ||
+      value.includes("not found") ||
+      value.includes("mismatch")
+    ) {
+      return "error";
+    }
+    return "success";
+  }, [status]);
 
   const editorTypographyStyle = useMemo(
     () =>
@@ -446,6 +463,10 @@ export default function Editor({ user, onLogout }: EditorProps) {
 
   const useLiveEditor = () => {
     setSelectedSession(null);
+    setText("");
+    setKeystrokes([]);
+    setLastTime(null);
+    setPasteEvents([]);
     setAnalysis(null);
     setStatus("");
     setShareLink("");
@@ -523,18 +544,6 @@ export default function Editor({ user, onLogout }: EditorProps) {
           </p>
         ) : null}
 
-        <textarea
-          className={`editor-textarea ${liveMode ? "" : "editor-readonly"}`.trim()}
-          rows={14}
-          value={text}
-          disabled={!liveMode}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          aria-label="Writing editor"
-          placeholder="Start writing naturally. Typing rhythm and paste metadata will be tracked."
-        />
-
         <div className="row">
           <button onClick={save} disabled={!liveMode}>
             Save Session
@@ -547,8 +556,20 @@ export default function Editor({ user, onLogout }: EditorProps) {
           </button>
         </div>
 
+        <textarea
+          className={`editor-textarea ${liveMode ? "" : "editor-readonly"}`.trim()}
+          rows={14}
+          value={text}
+          disabled={!liveMode}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          aria-label="Writing editor"
+          placeholder="Start writing naturally. Typing rhythm and paste metadata will be tracked."
+        />
+
         {status ? (
-          <div className="status-banner" role="status" aria-live="polite">
+          <div className={`status-banner ${statusTone}`} role="status" aria-live="polite">
             <p className="status-text">{status}</p>
             <button
               type="button"
@@ -561,21 +582,26 @@ export default function Editor({ user, onLogout }: EditorProps) {
           </div>
         ) : null}
 
-        <div className="report-tabs" role="tablist" aria-label="Session report sections">
+      </div>
+
+      <div className="card report-nav-card" role="tablist" aria-label="Session report sections">
+        <h2>Reports</h2>
+        <p className="session-count">Select one report view</p>
+        <div className="report-nav-list">
           <button
             type="button"
             role="tab"
             aria-selected={activeReportTab === "authenticity"}
-            className={`report-tab-btn ${activeReportTab === "authenticity" ? "active" : ""}`}
+            className={`report-nav-btn ${activeReportTab === "authenticity" ? "active" : ""}`}
             onClick={() => setActiveReportTab("authenticity")}
           >
-            Authenticity Report
+            Authenticity Score
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeReportTab === "detection"}
-            className={`report-tab-btn ${activeReportTab === "detection" ? "active" : ""}`}
+            className={`report-nav-btn ${activeReportTab === "detection" ? "active" : ""}`}
             onClick={() => setActiveReportTab("detection")}
           >
             Detection Map
@@ -584,7 +610,7 @@ export default function Editor({ user, onLogout }: EditorProps) {
             type="button"
             role="tab"
             aria-selected={activeReportTab === "session"}
-            className={`report-tab-btn ${activeReportTab === "session" ? "active" : ""}`}
+            className={`report-nav-btn ${activeReportTab === "session" ? "active" : ""}`}
             onClick={() => setActiveReportTab("session")}
           >
             Selected Session Details
@@ -593,13 +619,15 @@ export default function Editor({ user, onLogout }: EditorProps) {
             type="button"
             role="tab"
             aria-selected={activeReportTab === "replay"}
-            className={`report-tab-btn ${activeReportTab === "replay" ? "active" : ""}`}
+            className={`report-nav-btn ${activeReportTab === "replay" ? "active" : ""}`}
             onClick={() => setActiveReportTab("replay")}
           >
             Replay Preview
           </button>
         </div>
+      </div>
 
+      <div className="card report-view-card">
         <div className="report-box report-panel" role="tabpanel">
           {activeReportTab === "authenticity" ? (
             <>

@@ -18,7 +18,7 @@ export default function Login({ setUser, mode }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{text: string, type: 'success' | 'error' | ''}>({text: '', type: ''});
   const [isLoading, setIsLoading] = useState(false);
 
   const trimmedEmail = email.trim();
@@ -56,12 +56,12 @@ export default function Login({ setUser, mode }: LoginProps) {
 
   const login = async () => {
     if (!trimmedEmail || !password) {
-      setMessage("Please enter both email and password.");
+      setMessage({text: "Please enter both email and password.", type: 'error'});
       return;
     }
 
     if (!EMAIL_REGEX.test(trimmedEmail)) {
-      setMessage("Please enter a valid email address.");
+      setMessage({text: "Please enter a valid email address.", type: 'error'});
       return;
     }
 
@@ -74,37 +74,37 @@ export default function Login({ setUser, mode }: LoginProps) {
         setUser(data);
       } catch (error: any) {
         if (error?.status === 401) {
-          setMessage("Invalid email or password.");
+          setMessage({text: "Invalid email or password.", type: 'error'});
           return;
         }
-        setMessage(error?.data?.message || error?.message || "Login failed.");
+        setMessage({text: error?.data?.message || error?.message || "Login failed.", type: 'error'});
       }
     });
   };
 
   const register = async () => {
     if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
-      setMessage("Please complete all fields.");
+      setMessage({text: "Please complete all fields.", type: 'error'});
       return;
     }
 
     if (trimmedName.length < 2 || trimmedName.length > 60) {
-      setMessage("Full name should be between 2 and 60 characters.");
+      setMessage({text: "Full name should be between 2 and 60 characters.", type: 'error'});
       return;
     }
 
     if (!EMAIL_REGEX.test(trimmedEmail)) {
-      setMessage("Please enter a valid email address.");
+      setMessage({text: "Please enter a valid email address.", type: 'error'});
       return;
     }
 
     if (password !== confirmPassword) {
-      setMessage("Password and confirm password must match.");
+      setMessage({text: "Password and confirm password must match.", type: 'error'});
       return;
     }
 
     if (!STRONG_PASSWORD_REGEX.test(password)) {
-      setMessage("Use 10+ chars with uppercase, lowercase, number and symbol.");
+      setMessage({text: "Use 10+ chars with uppercase, lowercase, number and symbol.", type: 'error'});
       return;
     }
 
@@ -116,9 +116,9 @@ export default function Login({ setUser, mode }: LoginProps) {
           password,
           confirmPassword
         });
-        setMessage("Registration successful. Please sign in.");
+        setMessage({text: "Registration successful. Please sign in.", type: 'success'});
       } catch (error: any) {
-        setMessage(error?.data?.message || error?.message || "Registration failed.");
+        setMessage({text: error?.data?.message || error?.message || "Registration failed.", type: 'error'});
       }
     });
   };
@@ -144,8 +144,8 @@ export default function Login({ setUser, mode }: LoginProps) {
 
   const title = isRegisterMode ? "Create your account" : "Welcome back";
   const subtitle = isRegisterMode
-    ? "Register to start tracking writing authenticity with stronger proof signals."
-    : "Log in to continue your writing authenticity dashboard.";
+    ? "Start tracking your writing."
+    : "Continue to your dashboard.";
 
   return (
     <div className={`card auth-card ${isRegisterMode ? "auth-card-register" : "auth-card-login"}`}>
@@ -195,7 +195,7 @@ export default function Login({ setUser, mode }: LoginProps) {
           <div className="password-hints" aria-label="Password requirements">
             {passwordChecks.map((check) => (
               <p key={check.label} className={check.valid ? "hint-ok" : "hint-pending"}>
-                {check.valid ? "PASS" : "TODO"} {check.label}
+                {check.valid ? `✓ ${check.label}` : `• ${check.label}`}
               </p>
             ))}
           </div>
@@ -211,7 +211,7 @@ export default function Login({ setUser, mode }: LoginProps) {
         </Link>
       </div>
 
-      {message ? <p className="auth-message">{message}</p> : null}
+      {message.text ? <p className={`auth-message ${message.type}`}>{message.text}</p> : null}
     </div>
   );
 }

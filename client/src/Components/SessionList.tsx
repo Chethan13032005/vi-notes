@@ -66,7 +66,7 @@ export default function SessionList({
             </div>
           </div>
           <span>{new Date(session.createdAt).toLocaleString()}</span>
-          <span className="session-meta">Authenticity Score: {formatScore(session.score)}</span>
+          <span className="session-meta">Authenticity Score: {formatScore(session.analysis?.score ?? session.score)}</span>
           <div className="session-item-actions">
             <button
               type="button"
@@ -76,6 +76,16 @@ export default function SessionList({
             >
               Open Session
             </button>
+            {session.certificateId ? (
+              <button
+                type="button"
+                className="muted-btn"
+                onClick={() => window.open(`/verify/${session.certificateId}`, '_blank')}
+                aria-label="Open certificate"
+              >
+                Open Certificate
+              </button>
+            ) : null}
           </div>
         </div>
       ))}

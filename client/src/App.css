@@ -14,6 +14,7 @@
 
 * {
   box-sizing: border-box;
+  
 }
 
 .app-shell {
@@ -31,6 +32,7 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 320px 1fr;
+  grid-template-rows: auto 1fr;
   gap: 16px;
 }
 
@@ -172,6 +174,20 @@ button:disabled {
   gap: 10px;
 }
 
+.status-banner.success {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.status-banner.error {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.status-banner.error .status-text {
+  color: #dc2626;
+}
+
 .auth-message {
   margin-top: 12px;
   padding: 10px 12px;
@@ -179,6 +195,18 @@ button:disabled {
   border: 1px solid #bae6fd;
   background: #f0f9ff;
   color: #0c4a6e;
+}
+
+.auth-message.success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.auth-message.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .auth-actions {
@@ -216,7 +244,7 @@ button:disabled {
 }
 
 .hint-pending {
-  color: #6b7280;
+  color: #dc2626;
 }
 
 .status-dismiss {
@@ -277,6 +305,7 @@ button:disabled {
   --editor-font-family: "Segoe UI Variable", "Trebuchet MS", "Segoe UI", sans-serif;
   --editor-font-size: 16px;
   --editor-line-height: 1.55;
+  min-height: 560px;
 }
 
 .editor-card .editor-textarea,
@@ -294,8 +323,9 @@ button:disabled {
 }
 
 .session-list {
-  max-height: 88vh;
+  height: 560px;
   overflow: auto;
+  padding: 20px;
 }
 
 .session-count {
@@ -307,10 +337,11 @@ button:disabled {
 .session-item {
   width: 100%;
   text-align: left;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 10px;
   background: #f8fafc;
   border: 1px solid var(--line);
   color: #0f172a;
@@ -330,6 +361,14 @@ button:disabled {
   gap: 8px;
 }
 
+.session-item-top strong {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
 .session-item-actions-top {
   display: flex;
   align-items: center;
@@ -343,7 +382,7 @@ button:disabled {
 
 .session-meta {
   color: #334155;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .session-chip {
@@ -371,6 +410,44 @@ button:disabled {
 .session-item span {
   color: var(--muted);
   font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.report-nav-card {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+}
+
+.report-view-card {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.report-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-nav-btn {
+  width: 100%;
+  text-align: left;
+  background: #e6f0f7;
+  color: #18415d;
+  border: 1px solid #c2d8e8;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.report-nav-btn:hover {
+  background: #d8e9f5;
+}
+
+.report-nav-btn.active {
+  background: linear-gradient(135deg, #0b8ac9 0%, #0f766e 100%);
+  color: #ffffff;
+  border-color: transparent;
 }
 
 .report-box {
@@ -492,11 +569,12 @@ button:disabled {
   display: flex;
   justify-content: flex-end;
   margin-top: 6px;
+  gap: 6px;
 }
 
 .session-open-btn {
-  padding: 7px 10px;
-  font-size: 12px;
+  padding: 6px 8px;
+  font-size: 11px;
 }
 
 .session-item-actions .danger-btn {
@@ -634,7 +712,7 @@ button:disabled {
   background-color: #fef3c7;
   color: #92400e;
   font-weight: 500;
-  padding: 1px 2px;
+  padding: 0;
   border-radius: 2px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
@@ -649,7 +727,7 @@ button:disabled {
   background-color: #fee2e2;
   color: #991b1b;
   font-weight: 500;
-  padding: 1px 2px;
+  padding: 0;
   border-radius: 2px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
@@ -746,6 +824,13 @@ button:disabled {
 @media (max-width: 900px) {
   .workspace-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .report-nav-card,
+  .report-view-card {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .editor-toolbar {

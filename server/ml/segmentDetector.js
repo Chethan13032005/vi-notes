@@ -2,9 +2,27 @@ function overlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
 }
 
+function mergeRanges(ranges) {
+  if (!ranges.length) return [];
+  const ordered = [...ranges].sort((a, b) => a.start - b.start);
+  const merged = [ordered[0]];
+
+  for (let i = 1; i < ordered.length; i += 1) {
+    const current = ordered[i];
+    const last = merged[merged.length - 1];
+    if (current.start <= last.end) {
+      last.end = Math.max(last.end, current.end);
+    } else {
+      merged.push({ ...current });
+    }
+  }
+
+  return merged;
+}
+
 function toRanges(text, pasteEvents) {
   const max = text.length;
-  return (Array.isArray(pasteEvents) ? pasteEvents : [])
+  const rawRanges = (Array.isArray(pasteEvents) ? pasteEvents : [])
     .map((event) => {
       const start = Number(event?.start);
       const end = Number(event?.end);
@@ -16,6 +34,8 @@ function toRanges(text, pasteEvents) {
       };
     })
     .filter(Boolean);
+
+  return mergeRanges(rawRanges);
 }
 
 function splitSentences(text) {
@@ -52,6 +72,28 @@ function punctuationRatio(sentence) {
   return punctuation.length / Math.max(sentence.length, 1);
 }
 
+function segmentRiskLabel(segmentText, analysis, start, end) {
+  const stats = analysis?.stats || {};
+  let aiRisk = 0;
+  if ((analysis?.score || 100) < 60) aiRisk += 1;
+  if ((stats.textToKeystrokeRatio || 0) > 1.2) aiRisk += 1;
+  if ((stats.delayVariance || 0) > 0 && (stats.delayVariance || 0) < 180) aiRisk += 1;
+  if (segmentText.length > 140) aiRisk += 1;
+  if (avgWordLength(segmentText) > 6.3 && punctuationRatio(segmentText) < 0.02) aiRisk += 1;
+
+  if (aiRisk >= 3) {
+    return {
+      label: "ai_suspect",
+      reason: `Pattern in character range ${start}-${end} looks AI-assisted`
+    };
+  }
+
+  return {
+    label: "normal",
+    reason: `Human-written pattern detected in character range ${start}-${end}`
+  };
+}
+
 function detectSegments({ text, pasteEvents, analysis }) {
   const safeText = typeof text === "string" ? text : "";
   const pasteRanges = toRanges(safeText, pasteEvents);
@@ -60,39 +102,55 @@ function detectSegments({ text, pasteEvents, analysis }) {
 
   for (const item of sentenceRanges) {
     const { start, end, sentence } = item;
+    const overlappingCopies = pasteRanges.filter((range) => overlap(start, end, range.start, range.end));
 
-    const isCopied = pasteRanges.some((range) => overlap(start, end, range.start, range.end));
-    if (isCopied) {
+    if (overlappingCopies.length === 0) {
+      const result = segmentRiskLabel(sentence, analysis, start, end);
       segments.push({
         start,
         end,
-        label: "copied",
-        reason: `Copied text detected between character ${start} and ${end}`
+        label: result.label,
+        reason: result.reason
       });
       continue;
     }
 
-    const stats = analysis?.stats || {};
-    let aiRisk = 0;
-    if ((analysis?.score || 100) < 60) aiRisk += 1;
-    if ((stats.textToKeystrokeRatio || 0) > 1.2) aiRisk += 1;
-    if ((stats.delayVariance || 0) > 0 && (stats.delayVariance || 0) < 180) aiRisk += 1;
-    if (sentence.length > 140) aiRisk += 1;
-    if (avgWordLength(sentence) > 6.3 && punctuationRatio(sentence) < 0.02) aiRisk += 1;
+    let cursor = start;
+    for (const copyRange of overlappingCopies) {
+      const copiedStart = Math.max(start, copyRange.start);
+      const copiedEnd = Math.min(end, copyRange.end);
 
-    if (aiRisk >= 3) {
+      if (copiedStart > cursor) {
+        const beforeText = safeText.slice(cursor, copiedStart);
+        const beforeResult = segmentRiskLabel(beforeText, analysis, cursor, copiedStart);
+        segments.push({
+          start: cursor,
+          end: copiedStart,
+          label: beforeResult.label,
+          reason: beforeResult.reason
+        });
+      }
+
+      if (copiedEnd > copiedStart) {
+        segments.push({
+          start: copiedStart,
+          end: copiedEnd,
+          label: "copied",
+          reason: `Copied text detected between character ${copiedStart} and ${copiedEnd}`
+        });
+      }
+
+      cursor = Math.max(cursor, copiedEnd);
+    }
+
+    if (cursor < end) {
+      const afterText = safeText.slice(cursor, end);
+      const afterResult = segmentRiskLabel(afterText, analysis, cursor, end);
       segments.push({
-        start,
+        start: cursor,
         end,
-        label: "ai_suspect",
-        reason: `Pattern in character range ${start}-${end} looks AI-assisted`
-      });
-    } else {
-      segments.push({
-        start,
-        end,
-        label: "normal",
-        reason: `Character range ${start}-${end} shows normal writing behavior`
+        label: afterResult.label,
+        reason: afterResult.reason
       });
     }
   }

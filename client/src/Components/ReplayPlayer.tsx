@@ -236,6 +236,7 @@ export default function ReplayPlayer({
 
     if (!isPlaying) return;
     if (currentIndex >= replayEvents.length) {
+      setDisplayText(safeFinal);
       setIsPlaying(false);
       return;
     }
@@ -262,50 +263,61 @@ export default function ReplayPlayer({
     ? 0
     : Math.min(100, Math.round((Math.min(currentIndex, replayEvents.length) / replayEvents.length) * 100));
 
-  // Helper to identify segment type at a given position
-  const getSegmentAtPosition = (pos: number): SegmentData | null => {
-    if (!segments) return null;
-    for (const seg of segments) {
-      if (pos >= seg.start && pos < seg.end) {
-        return seg;
-      }
-    }
-    return null;
-  };
-
   // Render output with segment highlighting
   const renderHighlightedOutput = () => {
     if (!displayText) {
       return <span className="replay-placeholder">Press Play to reconstruct the session...</span>;
     }
 
-    const chars: React.ReactNode[] = [];
-    for (let i = 0; i < displayText.length; i++) {
-      const seg = getSegmentAtPosition(i);
-      const char = displayText[i];
-      const key = `char-${i}`;
+    if (!segments || segments.length === 0) {
+      return <span className="segment-normal">{displayText}</span>;
+    }
 
-      if (seg?.label === "copied") {
-        chars.push(
-          <span key={key} className="segment-copied" title={`Pasted: ${seg.reason}`}>
-            {char}
-          </span>
-        );
-      } else if (seg?.label === "ai_suspect") {
-        chars.push(
-          <span key={key} className="segment-ai-suspect" title={`Suspected AI: ${seg.reason}`}>
-            {char}
-          </span>
-        );
-      } else {
-        chars.push(
-          <span key={key} className="segment-normal">
-            {char}
+    const nodes: React.ReactNode[] = [];
+    const ordered = [...segments]
+      .filter((segment) => Number.isFinite(segment.start) && Number.isFinite(segment.end))
+      .sort((a, b) => a.start - b.start);
+
+    let cursor = 0;
+    ordered.forEach((segment, index) => {
+      const start = Math.max(0, Math.min(displayText.length, Math.floor(segment.start)));
+      const end = Math.max(0, Math.min(displayText.length, Math.floor(segment.end)));
+
+      if (start > cursor) {
+        nodes.push(
+          <span key={`normal-gap-${index}`} className="segment-normal">
+            {displayText.slice(cursor, start)}
           </span>
         );
       }
+
+      if (end > start) {
+        const className =
+          segment.label === "copied"
+            ? "segment-copied"
+            : segment.label === "ai_suspect"
+              ? "segment-ai-suspect"
+              : "segment-normal";
+
+        nodes.push(
+          <span key={`seg-${index}-${start}-${end}`} className={className} title={segment.reason}>
+            {displayText.slice(start, end)}
+          </span>
+        );
+      }
+
+      cursor = Math.max(cursor, end);
+    });
+
+    if (cursor < displayText.length) {
+      nodes.push(
+        <span key="normal-tail" className="segment-normal">
+          {displayText.slice(cursor)}
+        </span>
+      );
     }
-    return chars;
+
+    return nodes;
   };
 
   return (

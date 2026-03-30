@@ -50,6 +50,7 @@ router.post("/save", async (req, res) => {
       keystrokes,
       pasteEvents,
       analysis,
+      score: typeof analysis?.score === "number" ? analysis.score : 0,
       createdAt: new Date()
     });
 
@@ -57,7 +58,8 @@ router.post("/save", async (req, res) => {
     return res.status(201).json({
       message: "Saved",
       sessionId: session._id,
-      analysis: session.analysis
+      analysis: session.analysis,
+      score: session.score
     });
   } catch (error) {
     return res.status(500).json({ message: "Failed to save session" });
